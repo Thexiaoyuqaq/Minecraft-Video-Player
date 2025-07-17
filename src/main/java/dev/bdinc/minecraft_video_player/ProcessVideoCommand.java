@@ -28,7 +28,7 @@ public class ProcessVideoCommand implements CommandExecutor {
         String url = args[0];
         sender.sendMessage("URL is set to " + url);
         try {
-            Main.getInstance().processVideo(new URL(url), player.getLocation());
+            Main.getInstance().processVideoAsync(new URL(url), player.getLocation());
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

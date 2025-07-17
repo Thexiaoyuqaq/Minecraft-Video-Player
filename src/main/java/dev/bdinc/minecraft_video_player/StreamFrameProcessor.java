@@ -55,7 +55,7 @@ public class StreamFrameProcessor {
                             BufferedImage image = ImageIO.read(imagePath.toFile());
                             if (image != null) {
                                 // Run the processImage method on the main server thread
-                                Bukkit.getScheduler().runTask(plugin, () -> plugin.processImage(image, new Location(world, x, y, z)));
+                                Bukkit.getScheduler().runTask(plugin, () -> plugin.processImageAsync(image, new Location(world, x, y, z)));
                             }
                         }
 

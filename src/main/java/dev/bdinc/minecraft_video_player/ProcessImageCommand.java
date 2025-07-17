@@ -37,7 +37,7 @@ public class ProcessImageCommand implements CommandExecutor {
             }
             sender.sendMessage("Image is now gathered!");
             sender.sendMessage("Processing image!");
-            Main.getInstance().processImage(image, player.getLocation());
+            Main.getInstance().processImageAsync(image, player.getLocation());
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

@@ -19,7 +19,7 @@ public class ProcessStreamCommand implements CommandExecutor {
         Player player = (Player) sender;
 
 
-        Main.getInstance().processStream(new File("./stream_output"), player.getLocation());
+//        Main.getInstance().pa(new File("./stream_output"), player.getLocation());
 
         return false;
     }

@@ -31,7 +31,7 @@ public class VideoFrameProcessor {
             public void run() {
                 BufferedImage frame = frameQueue.poll();
                 if (frame != null) {
-                    plugin.pasteImage(world, x, y, z, frame);
+                    plugin.pasteImageAsync(world, x, y, z, frame);
                 }
             }
         }.runTaskTimer(plugin, 0, 1);

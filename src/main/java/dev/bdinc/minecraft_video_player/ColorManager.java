@@ -1,16 +1,20 @@
 package dev.bdinc.minecraft_video_player;
 
-import org.bukkit.Bukkit;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlock;
-import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_21_R3.block.CraftBlock;
+import org.bukkit.craftbukkit.v1_21_R3.util.CraftMagicNumbers;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.VoxelShape;
 
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ColorManager {
 
@@ -18,40 +22,42 @@ public class ColorManager {
 
     public static Color getColor(Block block) {
         CraftBlock cb = (CraftBlock) block;
-        net.minecraft.world.level.block.state.BlockState bs = cb.getNMS();
-        net.minecraft.world.level.material.MaterialColor mc = bs.getMapColor(cb.getCraftWorld().getHandle(), cb.getPosition());
-        return new Color(mc.col);
+        BlockState bs = cb.getNMS();
+        CraftWorld craftWorld = (CraftWorld) block.getWorld();
+        BlockGetter world = craftWorld.getHandle();
+        BlockPos pos = new BlockPos(block.getX(), block.getY(), block.getZ());
+
+        MapColor mc = bs.getMapColor(world, pos);
+        return new Color(getRGBFromMapColor(mc));
     }
 
     public static Color getColor(Material material) {
         net.minecraft.world.level.block.Block block = CraftMagicNumbers.getBlock(material);
-        net.minecraft.world.level.material.MaterialColor mc = block.defaultMaterialColor();
-        return new Color(mc.col);
+        BlockState defaultState = block.defaultBlockState();
+        MapColor mc = defaultState.getMapColor(null, null); // Nulls are acceptable for default color
+        return new Color(getRGBFromMapColor(mc));
+    }
+
+    private static int getRGBFromMapColor(MapColor mapColor) {
+        // 1.21中获取RGB颜色的正确方式
+        return mapColor.col;
     }
 
     public static void setupColorMap() {
-        Iterator<Material> iterator = Arrays.stream(Material.values()).iterator();
-
-        World world = Bukkit.getWorlds().get(0);
-        Block defaultBlock = world.getBlockAt(0, 0, 0);
-        while (iterator.hasNext()) {
-            Material material = iterator.next();
-
-            // Removing some blocks that are not suitable for this
+        for (Material material : Material.values()) {
+            // 跳过不合适的方块
             if (!material.isBlock() || material.isAir() || !material.isSolid()) continue;
             if (material.name().contains("GLASS") || material.equals(Material.BARRIER)) continue;
             if (material.name().contains("POWDER") || material.name().contains("SAND") || material.name().contains("GRAVEL")) continue;
             if (material.equals(Material.REDSTONE_LAMP) || material.name().contains("SHULKER") || material.name().contains("GLAZED")) continue;
 
             if (Main.speedMode) {
-                if (material.name().toUpperCase().contains("WOOL") || material.name().toUpperCase().contains("CONCRETE") || material.name().toUpperCase().contains("TERRACOTTA")){
+                String upperName = material.name().toUpperCase();
+                if (upperName.contains("WOOL") || upperName.contains("CONCRETE") || upperName.contains("TERRACOTTA")) {
                     colorMap.put(material, getColor(material));
                 }
             }
-
         }
-        world.getBlockAt(0, 0, 0).setType(defaultBlock.getType());
-        world.getBlockAt(0, 0, 0).setBlockData(defaultBlock.getBlockData(), false);
     }
 
     public static boolean isCube(Block block) {
@@ -64,35 +70,9 @@ public class ColorManager {
         );
     }
 
-    // Get the closest material to the color
+    // 缓存最近使用的材质
     public static Material lastMaterial;
     public static Color lastColor;
-
-//    public static Material getBlock(Color color) {
-//        // Check if the color is the same as the last color
-//        if (lastColor != null && lastColor.equals(color)) {
-//            return lastMaterial;
-//        }
-//
-//        // Create a priority queue to store the distance between the color and the material
-//        PriorityQueue<Map.Entry<Material, Double>> distanceQueue = new PriorityQueue<>(Comparator.comparingDouble(Map.Entry::getValue));
-//
-//        colorMap.forEach((material, materialColor) -> {
-//            double distance = getDistance(color, materialColor);
-//            distanceQueue.offer(Map.entry(material, distance));
-//        });
-//
-//        if (distanceQueue.isEmpty()) {
-//            return Material.AIR;
-//        }
-//
-//        // Set the last color and material
-//        lastColor = color;
-//        lastMaterial = distanceQueue.peek().getKey();
-//
-//        // Get the closest material
-//        return distanceQueue.poll().getKey();
-//    }
 
     public static Material getBlock(Color color) {
         if (lastColor != null && lastColor.equals(color)) {
@@ -102,14 +82,11 @@ public class ColorManager {
         double minDistance = Double.MAX_VALUE;
         Material closestMaterial = Material.AIR;
 
-        // Iterate through the color map and find the closest color
-        for (Map.Entry<Material, Color> materialColorEntry : colorMap.entrySet()) {
-            Material material = materialColorEntry.getKey();
-            Color materialColor = materialColorEntry.getValue();
-            double distance = getDistance(color, materialColor);
+        for (Map.Entry<Material, Color> entry : colorMap.entrySet()) {
+            double distance = getDistance(color, entry.getValue());
             if (distance < minDistance) {
                 minDistance = distance;
-                closestMaterial = material;
+                closestMaterial = entry.getKey();
             }
         }
 

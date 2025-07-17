@@ -9,7 +9,7 @@ public class UndoCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        Main.getInstance().undoLastImage();
+        Main.getInstance().undoLastImageAsync();
         return false;
     }
 }
